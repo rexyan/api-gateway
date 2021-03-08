@@ -50,8 +50,8 @@ function _M.check_host()
 end
 
 -- 403 
-function _M.http_for()
-    ngx.exit(500)
+function _M.http_forbidden()
+    ngx.exit(403) {"data"}
 end
 
 return _M

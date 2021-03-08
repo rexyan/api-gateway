@@ -1,0 +1,6 @@
+{
+    "luaide.scriptRoots": [
+        "${workspaceRoot}/src"
+    ],
+    "editor.snippetSuggestions": "bottom"
+}

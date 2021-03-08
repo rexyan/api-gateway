@@ -1,0 +1,22 @@
+worker_processes  1;        #nginx worker 数量
+error_log logs/error.log;   #指定错误日志文件路径
+events {
+    worker_connections 1024;
+}
+
+http {
+
+    #lua模块路径，其中”;;”表示默认搜索路径，默认到/usr/servers/nginx下找  
+    lua_package_path  "$prefix/src/?.lua;;";
+  
+    server {
+        #监听端口，若你的8080端口已经被占用，则需要修改
+        listen 8888;
+        location / {
+            default_type text/html;
+            lua_code_cache off;  
+            content_by_lua_file src/init.lua; 
+            
+        }
+    }
+}

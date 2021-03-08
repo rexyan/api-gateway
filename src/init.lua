@@ -4,7 +4,10 @@
 -- 2. 支持基于 “漏桶” 算法请求限流
 -- 3. 支持 cas token 转换为 jwt token
 -- 4. 支持自定义定义拦截规则
---
+
+--- 启动调试
+require("LuaDebugOpenrestyJit")("localhost", 7003)
+
 local balancer = require "ngx.balancer"
 local cyclone_core = require "cyclone.core"
 local cyclone_util = require "cyclone.util"
@@ -22,11 +25,14 @@ function _M.http_access_phase()
     local uri = ngx.var.uri
     local host = ngx.var.host
     local method = ngx.req.get_method()
-    ngx.say(method)
     local remote_addr = ngx.var.remote_addr
-    cyclone_core.fake_fetch(uri, host, method, remote_addr)
-    cyclone_util.check_remote_addr()
-    cyclone_util.http_for()
+
+    -- 校验 IP，Host
+    if not cyclone_util.check_remote_addr() or not cyclone_util.check_host() then
+        cyclone_util.http_forbidden()
+    end
+
+
 
 end
 

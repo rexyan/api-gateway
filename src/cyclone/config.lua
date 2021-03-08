@@ -12,7 +12,7 @@ end
 
 -- 获取 host
 function _M.get_allow_host()
-    return {"www.baidu.com", "www.google.com"}
+    return {"www.baidu.com", "www.google.com", "127.0.0.1"}
 end
 
 return _M
