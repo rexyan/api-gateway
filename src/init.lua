@@ -2,7 +2,7 @@
 -- Cyclone Api Gateway
 -- 1. 支持黑白名单设置（IP，请求头，自定义字段）
 -- 2. 支持基于 “漏桶” 算法请求限流
--- 3. 支持 cas token 转换为 jwt token
+-- 3. 支持 CAS Token 转换用户信息
 -- 4. 支持自定义定义拦截规则
 
 --- 启动调试
@@ -22,17 +22,13 @@ end
 
 
 function _M.http_access_phase()
-    local uri = ngx.var.uri
-    local host = ngx.var.host
-    local method = ngx.req.get_method()
-    local remote_addr = ngx.var.remote_addr
-
-    -- 校验 IP，Host
-    if not cyclone_util.check_remote_addr() or not cyclone_util.check_host() then
+    -- 校验 IP, Host, 自定义规则 
+    if not cyclone_core.check_remote_addr() or not cyclone_core.check_host() or not cyclone_core.check_custom_rule() then
         cyclone_util.http_forbidden()
     end
 
-
+    -- CAS Token 转换用户信息
+    cyclone_core.convert_cas_token()
 
 end
 
@@ -52,9 +48,6 @@ function _M.http_log_phase()
     if ngx.ctx then
         -- do something
     end
-end
-
-function _M.http_admin()
 end
 
 function _M.http_ssl_phase()

@@ -5,7 +5,6 @@ events {
 }
 
 http {
-
     #lua模块路径，其中”;;”表示默认搜索路径，默认到/usr/servers/nginx下找  
     lua_package_path  "$prefix/src/?.lua;;";
   
@@ -16,7 +15,6 @@ http {
             default_type text/html;
             lua_code_cache off;  
             content_by_lua_file src/init.lua; 
-            
         }
     }
 }
