@@ -16,7 +16,10 @@
 ```shell
 openresty -p `pwd` -c conf/nginx.conf
 ```
-
+或
+```
+nginx -p ./ -c conf/nginx.conf
+```
 
 
 #### Visual Studio Code + LUA ide
