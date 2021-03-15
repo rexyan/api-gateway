@@ -92,21 +92,32 @@ function _M.check_custom_rule()
     end
 end
 
--- 验证 jwt token
+-- 验证 jwt token， 并在 ngx.ctx 中设置用户名和邮箱信息
 function _M.check_jwt_token(token)
     -- TODO 校验 Token
+    local ctx = ngx.ctx
+    ctx.user_name = "runsha.yan"
+    ctx.user_id = 1
+    ctx.user_email = "runsha.yan@126.com"
+    ctx.cyclone_auth = true  -- 认证成功标识
     return true
 end
 
 -- CAS Token 转换用户信息
 function _M.cyclone_auth()
-    -- 判断哪些链接需要进行认证
+    -- 判断哪些链接不需要进行认证
     local no_auth_list = config.get_no_auth_list()
-    local current_req_url = ngx.req
+    local current_req_url = ngx.var.request_uri 
 
-    if not is_in_array(current_req_url, no_auth_list) then
+    if not is_in_array(no_auth_list, current_req_url) then
         -- 验证 jwt token
-        return _M.check_jwt_token()
+        if _M.check_jwt_token() then
+            _M.set_cyclone_auth_result()
+            return true
+        else
+            return false
+        end
+        
     end
 
     return true
@@ -160,6 +171,33 @@ function _M.release_limit_req_conn()
             ngx.log(ngx.ERR,"failed to record the connection leaving ", "request: ", err)
             return
         end
+    end
+end
+
+
+-- 请求回传认证后的用户信息
+function _M.set_cyclone_auth_result()
+    local ctx = ngx.ctx
+    if ctx.cyclone_auth then
+        request.set_header(ctx, "USER_NAME", ctx.user_name)
+        request.set_header(ctx, "USER_EMAIL", ctx.user_email)
+        request.set_header(ctx, "USER_ID", ctx.user_id)
+    end
+end
+
+
+function _M.convert_cas_ticket_to_jwt_token()
+    -- 只有 cas login 请求返回才进行拦截
+    local current_req_url = ngx.var.request_uri
+    local request_method = ngx.var.request_method
+    local resp_headers = ngx.resp.get_headers()
+    print(current_req_url, resp_headers)
+    if string.find(current_req_url, "/cas/login") and request_method == "POST" then
+        -- 获取合法 jwt token
+        local jwt_token = "bGlqdW4ueWFuQGN5Y2xvbmUtcm9ib3RpY3MuY29t.MTIzNDU2"
+
+        -- 添加到请求头中返回
+        ngx.header['Set-Cookie'] = 'session='.. jwt_token .. '; path=/'
     end
 end
 

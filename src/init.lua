@@ -11,6 +11,7 @@ require("LuaDebugOpenrestyJit")("localhost", 7003)
 local balancer = require "ngx.balancer"
 local cyclone_core = require "cyclone.core"
 local cyclone_util = require "cyclone.util"
+local request = require("cyclone.request")
 
 local _M = {version = 0.1}
 
@@ -20,15 +21,11 @@ end
 function _M.http_init_worker()
 end
 
-local function fake_fetch()
-    ngx.ctx.ip = "127.0.0.1"
-    ngx.ctx.port = 5000
-end
 
 function _M.http_access_phase()
+    print(ngx.var.request_uri)
     -- 请求限流
     cyclone_core.limit_req_conn()
-    fake_fetch()
 
     -- 校验 IP
     if not cyclone_core.check_remote_addr() then
@@ -55,6 +52,7 @@ end
 function _M.http_header_filter_phase()
     if ngx.ctx then
         -- do something
+        cyclone_core.convert_cas_ticket_to_jwt_token()
     end
 end
 
