@@ -33,7 +33,8 @@ end
 
 -- 获取不需要认证的 URL 地址
 function _M.get_no_auth_list()
-    return {"/cas/login", "/cas/logout"}
+    return {"/cas/login", "/cas/logout", "cas/tokenValidate", "static"}
 end
+
 
 return _M

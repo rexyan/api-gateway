@@ -23,7 +23,6 @@ end
 
 
 function _M.http_access_phase()
-    print(ngx.var.request_uri)
     -- 请求限流
     cyclone_core.limit_req_conn()
 
@@ -42,17 +41,18 @@ function _M.http_access_phase()
         cyclone_util.http_forbidden()
     end
     
-    -- 校验 Token
+    -- 校验 JWT Token
     if not cyclone_core.cyclone_auth() then
         cyclone_util.http_forbidden()
     end
 
+    -- cyclone_core.convert_cas_ticket_to_jwt_token()
 end
 
 function _M.http_header_filter_phase()
     if ngx.ctx then
-        -- do something
-        cyclone_core.convert_cas_ticket_to_jwt_token()
+        -- 转换 cas_ticket 到 jwt_token
+        -- cyclone_core.convert_cas_ticket_to_jwt_token()
     end
 end
 

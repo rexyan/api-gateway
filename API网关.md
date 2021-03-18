@@ -33,27 +33,27 @@ start nginx 或 nginx.exe
    
    ```
    nginx.exe -s stop 或 nginx.exe -s quit
-```
+   ```
    
    注：stop是快速停止nginx，可能并不保存相关信息；quit是完整有序的停止nginx，并保存相关信息。
    
 3. 重新载入 Nginx：
    
-   ```
-nginx.exe -s reload
-   ```
-   
+    ```
+    nginx.exe -s reload
+    ```
+
    当配置信息修改，需要重新载入这些配置时使用此命令。
-   
+
 4. 重新打开日志文件：
    
-```
+   ```
    nginx.exe -s reopen
    ```
    
 5. 查看Nginx版本：
    
-```
+   ```
    nginx -v
    ```
    
@@ -62,9 +62,9 @@ nginx.exe -s reload
     
 7. 杀死进程
 
-    ```
+   ```
     taskkill -PID 25956 -F
-    ```
+   ```
 
 
 
@@ -76,7 +76,15 @@ Mac 用户推荐使用 [homebrew](https://brew.sh/) 进行安装，其他系统�
 
 ### Nginx 和 OpenResty  执行阶段
 
-Nginx 和 OpenResty 两者都有对应的生命周期或者执行阶段，在开发过程中，可以在特定阶段做指定的功能，例如在 init_by_lua 阶段执行全局的初始化工作，init_worker_by_lua 阶段执行每个 worker 的初始化工作，access_by_lua 判断请求是否合法等。
+Nginx 和 OpenResty 两者都有对应的生命周期或者执行阶段，在开发过程中，可以在特定阶段做指定的功能。
+
+- `set_by_lua`，用于设置变量；
+- `rewrite_by_lua`，用于转发、重定向等；
+- `access_by_lua`，用于准入、权限等；
+- `content_by_lua`，用于生成返回内容；
+- `header_filter_by_lua`，用于应答头过滤处理；
+- `body_filter_by_lua`，用于应答体过滤处理；
+- `log_by_lua`，用于日志记录。
 
 
 
@@ -164,6 +172,12 @@ require("LuaDebugOpenrestyJit")("localhost", 7003)
 
 
 ## 学习资料
+
+### Nginx 教程
+
+[agentzh 的 Nginx 教程（版本 2020.03.19）](https://openresty.org/download/agentzh-nginx-tutorials-zhcn.html)
+
+
 
 ### apisix nginx 配置
 
@@ -301,6 +315,14 @@ http {
 
 
 
+### OpenResty 的发展
+
+OpenResty 并不像其他的开发语言一样从零开始搭建，而是基于成熟的开源组件——NGINX 和 LuaJIT。OpenResty 诞生于 2007 年，不过，它的第一个版本并没有选择 Lua，而是用了 Perl，这跟作者章亦春的技术偏好有很大关系。
+
+但 Perl 的性能远远不能达到要求，于是，在第二个版本中，Perl 就被 Lua 给替换了。 不过，**在 OpenResty 官方的项目中，Perl 依然占据着重要的角色，OpenResty 工程化方面都是用 Perl 来构建，比如测试框架、Linter、CLI 等**。后来，章亦春离开了淘宝，加入了美国的 CDN 公司 Cloudflare。因为 OpenResty 高性能和动态的优势很适合 CDN 的业务需求，很快， OpenResty 就成为 CDN 的技术标准。 通过丰富的 lua-resty 库，OpenResty 开始逐渐摆脱 NGINX 的影子，形成自己的生态体系，在 API 网关、软 WAF 等领域被广泛使用。
+
+
+
 ### 标准 Lua 和 LuaJIT
 
 **标准 Lua 和 LuaJIT 是两回事儿，LuaJIT 只是兼容了 Lua 5.1 的语法。**在 OpenResty 几年前的老版本中，编译的时候，你可以选择使用标准 Lua VM ，或者 LuaJIT VM 来作为执行环境，不过，现在已经去掉了对标准 Lua 的支持，只支持 LuaJIT。OpenResty 维护了自己的 LuaJIT 分支，并扩展了很多独有的 API。
@@ -313,13 +335,25 @@ JIT 编译器会从热函数的入口或者热循环的某个位置开始，尝�
 
 
 
+### 第三方模块列表
+
+https://github.com/bungle/awesome-resty
+
+
+
+### LuaJIT 拓展新接口
+
+https://github.com/openresty/luajit2/#new-api
+
+
+
 ### NYI
 
 LuaJIT 中 JIT 编译器的实现还不完善，有一些原语它还无法编译，因为这些原语实现起来比较困难，再加上 LuaJIT 的作者目前处于半退休状态。这些原语包括常见的 pairs() 函数、unpack() 函数、基于 Lua CFunction 实现的 Lua C 模块等。这样一来，当 JIT 编译器在当前代码路径上遇到它不支持的操作时，便会退回到解释器模式。而 JIT 编译器不支持的这些原语，NYI，全称为 Not Yet Implemented，[NYI 的完整列表](http://wiki.luajit.org/NYI)
 
 
 
-### Worker间的通信
+### Worker 间的通信
 
 **数据共享的几种方式**
 
@@ -393,20 +427,45 @@ LuaJIT 中 JIT 编译器的实现还不完善，有一些原语它还无法编�
 
    这种方法是基于红黑树实现的，性能很好，但也有自己的局限性——你必须事先在 Nginx 的配置文件中，声明共享内存的大小，并且这不能在运行期更改：
 
-   ```
+   ```lua
    lua_shared_dict dogs 10m;
    ```
 
    shared dict 同样只能缓存字符串类型的数据，不支持复杂的 Lua 数据类型。这也就意味着，当我需要存放 table 等复杂的数据类型时，我将不得不使用 json 或者其他的方法，来序列化和反序列化，这自然会带来不小的性能损耗。
 
-   
-
-### 第三方模块列表
-
-https://github.com/bungle/awesome-resty
 
 
 
-### LuaJIT 拓展新接口
+### OpenResty 编码指南
 
-https://github.com/openresty/luajit2/#new-api
+在 OpenResty 中，也有两个可以帮你自动化检测代码风格的工具：luacheck 和 lj-releng。前者是 Lua 和 OpenResty 世界通用的检测工具，后者则是 OpenResty 自己用 perl 写的代码检测工具。
+
+**缩进**： 4 个空格作为缩进的标记
+
+**空格**：在操作符的两边，都需要用一个空格来做分隔。例如：`local i = 1`
+
+**空行**:  比如在行尾增加一个分号，函数之间需要用两个空行来做分隔，如果有多个 if elseif 的分支，它们之间也需要一个空行来做分隔。
+
+**每行最大长度**： 每行不能超过 80 个字符，如果超过的话，需要换行并对齐。
+
+**变量**： 永远使用局部变量，不要使用全局变量
+
+**数组**： 使用`table.new` 来预先分配数组，一定不要在数组中使用 nil，如果一定要使用空值，请用 ngx.null 来表示
+
+**字符串**： 不要在热代码路径上拼接字符串
+
+**函数**： 函数的命名遵循 `snake_case`
+
+**模块**： 所有 require 的库都要 local 化
+
+
+
+### 压测悍马 wrk
+
+wrk 和 OpenResty 有很多类似的地方。wrk 也不是从零开始编写的一个开源项目，它站在 LuaJIT 和 Redis 这两个巨人的肩膀上，充分利用了系统的多核资源来生成请求。除此之外，wrk 还暴露了 Lua API，你可以嵌入自己的 Lua 脚本，来自定义请求的头和内容，使用非常灵活。
+
+```shell
+wrk -t12 -c400 -d30s http://127.0.0.1:8080/index.html
+```
+
+wrk 会使用 12 个线程，保持 400 个长连接，持续 30 秒钟，来给指定的 API 接口发送 HTTP 请求。如果不指定参数的话，wrk 会默认启动 2 个线程和 10 个长连接。
