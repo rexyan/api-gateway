@@ -26,20 +26,20 @@ function _M.http_access_phase()
     -- 请求限流
     cyclone_core.limit_req_conn()
 
-    -- 校验 IP
-    if not cyclone_core.check_remote_addr() then
-        cyclone_util.http_forbidden()
-    end
+    -- -- 校验 IP
+    -- if not cyclone_core.check_remote_addr() then
+    --     cyclone_util.http_forbidden()
+    -- end
 
-    -- 校验 Host
-    if not cyclone_core.check_host() then
-        cyclone_util.http_forbidden()
-    end
+    -- -- 校验 Host
+    -- if not cyclone_core.check_host() then
+    --     cyclone_util.http_forbidden()
+    -- end
 
-    -- 校验 自定义规则 
-    if not cyclone_core.check_custom_rule() then
-        cyclone_util.http_forbidden()
-    end
+    -- -- 校验 自定义规则 
+    -- if not cyclone_core.check_custom_rule() then
+    --     cyclone_util.http_forbidden()
+    -- end
     
     -- 校验 JWT Token
     if not cyclone_core.cyclone_auth() then
