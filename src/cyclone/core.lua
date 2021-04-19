@@ -97,7 +97,11 @@ end
 function _M.check_jwt_token(token)
     -- require "cyclone.try-catch"
     local jwt_token = ngx.req.get_headers().Authorization or ""
-    
+
+    if (jwt_token == "") then
+        ngx.exit(401)
+    end
+
     -- 判断是否含有 bearer
     if not string_find({jwt_token}, "bearer") then
         jwt_token = "bearer " .. jwt_token
